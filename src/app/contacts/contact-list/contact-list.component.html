@@ -1,0 +1,29 @@
+<link rel="stylesheet" href="./contact-list.component.css" />
+
+<div class="container col-md-12" style="margin-left: 10px">
+  <div class="panel panel-default">
+    <div class="panel-heading clearfix">
+      <h1 class="panel-title pull-left custom-panel-title">Contacts</h1>
+      <div class="pull-right">
+        <a href="#" class="btn btn-default btn-success">New Contact</a>
+      </div>
+    </div>
+
+    <div class="row">
+    <div class="col-md-12">
+      <a
+        href="#"
+        class="list-group-item clearfix"
+        *ngFor="let contact of contacts"
+      >
+        <div class="pull-left">
+          <h3 class="list-group-item-text">{{contact.name}}</h3>
+        </div>
+        <span class="pull-right">
+            <img src="{{contact.imgUrl}}" alt="">
+        </span>
+      </a>
+      </div>
+    </div>
+  </div>
+</div>
