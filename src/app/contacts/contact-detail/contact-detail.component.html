@@ -1,8 +1,9 @@
 <div class="container col-md-12">
   <div class="panel panel-default">
     <div class="panel-heading clearfix">
-      <h1 class="panel-title"></h1>
-      <img src="" alt=""/>
+      <h1 class="panel-title" style="font-size: 30px;">{{contact.name}}</h1>
+      <br>
+      <img src="{{contact.imgUrl}}" alt="{{contact.name}}"/>
       <div class="btn-group pull-right">
         <a href="#" class="btn btn-primary" style="display: inline-block; vertical-align: middle; margin-left: 10px;">Edit</a>
         <a href="#" class="btn btn-danger" style="display: inline-block; vertical-align: middle; margin-left: 5px;">Delete</a>
@@ -12,8 +13,8 @@
     <div class="row">
         <div class="col-md-12">
             <div class="list-group-item clearfix">
-                <h4 class="list-group-item-text ml-2">Email: </h4>
-                <h4 class="list-group-item-text ml-2">Phone: </h4>
+                <h4 class="list-group-item-text ml-2">Email: {{contact.email}} </h4>
+                <h4 class="list-group-item-text ml-2">Phone: {{contact.phone}} </h4>
             </div>
         </div>
     </div>
