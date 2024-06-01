@@ -5,14 +5,14 @@
     <div class="panel-heading clearfix">
       <h1 class="panel-title pull-left custom-panel-title">Contacts</h1>
       <div class="pull-right">
-        <a href="#" class="btn btn-default btn-success">New Contact</a>
+        <a class="btn btn-default btn-success" [routerLink]="['/contacts', 'new']">New Contact</a>
       </div>
     </div>
 
     <div class="row">
     <div class="col-md-12">
       <div *ngFor="let contact of contacts">
-      <cms-contact-item [contact]="contact" (click)="onSelected(contact)"></cms-contact-item>
+      <cms-contact-item [contact]="contact"></cms-contact-item>
       </div>
     </div>
     </div>

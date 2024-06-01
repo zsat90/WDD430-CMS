@@ -5,8 +5,8 @@
       <br>
       <img src="{{contact.imageUrl}}" alt="{{contact.name}}"/>
       <div class="btn-group pull-right">
-        <a href="#" class="btn btn-primary" style="display: inline-block; vertical-align: middle; margin-left: 10px;">Edit</a>
-        <a href="#" class="btn btn-danger" style="display: inline-block; vertical-align: middle; margin-left: 5px;">Delete</a>
+        <a class="btn btn-primary" style="display: inline-block; vertical-align: middle; margin-left: 10px;" [routerLink]="['/contacts', contact.id, 'edit']">Edit</a>
+        <a class="btn btn-danger" style="display: inline-block; vertical-align: middle; margin-left: 5px;" (click)="onDeleteContact()">Delete</a>
       </div>
     </div>
 
