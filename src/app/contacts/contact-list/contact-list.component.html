@@ -10,11 +10,11 @@
     </div>
 
     <div class="row">
-    <div class="col-md-12">
-      <div *ngFor="let contact of contacts">
-      <cms-contact-item [contact]="contact"></cms-contact-item>
+      <div class="col-md-12" cdkDropList [cdkDropListData]="contacts" [cdkDropListConnectedTo]="['groupList']">
+        <div *ngFor="let contact of contacts" cdkDrag [cdkDragData]="contact">
+          <cms-contact-item [contact]="contact"></cms-contact-item>
+        </div>
       </div>
-    </div>
     </div>
   </div>
 </div>
