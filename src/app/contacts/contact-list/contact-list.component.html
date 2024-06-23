@@ -3,16 +3,32 @@
 <div class="container col-md-12" style="margin-left: 10px">
   <div class="panel panel-default">
     <div class="panel-heading clearfix">
-      <h1 class="panel-title pull-left custom-panel-title">Contacts</h1>
-      <div class="pull-right">
-        <a class="btn btn-default btn-success" [routerLink]="['/contacts', 'new']">New Contact</a>
-      </div>
-    </div>
+      <div class="panel-heading">
 
-    <div class="row">
-      <div class="col-md-12" cdkDropList [cdkDropListData]="contacts" [cdkDropListConnectedTo]="['groupList']">
-        <div *ngFor="let contact of contacts" cdkDrag [cdkDragData]="contact">
-          <cms-contact-item [contact]="contact"></cms-contact-item>
+
+        <div class="row">
+          <h1 class="panel-title pull-left custom-panel-title pb">Contacts</h1>
+        </div>
+      </div>
+
+      <div class="row col-xs-12">
+        <div class="input-group col-xs-10 pb">
+          <input type="text" class="form-control" placeholder="Enter a search value" #searchBox (keyup)="search(searchBox.value)">
+          <div class="input-group-addon" (click)="search(searchBox.value)">
+            <span class="glyphicon glyphicon-search"></span>
+          </div>
+          <div class="pull-right col-xs-2">
+            <a class="btn btn-default btn-success" [routerLink]="['/contacts', 'new']">New Contact</a>
+          </div>
+        </div>
+        
+      </div>
+
+      <div class="row">
+        <div class="col-md-12" cdkDropList [cdkDropListData]="contacts" [cdkDropListConnectedTo]="['groupList']">
+          <div *ngFor="let contact of contacts | contactsFilter: term" cdkDrag [cdkDragData]="contact">
+            <cms-contact-item [contact]="contact"></cms-contact-item>
+          </div>
         </div>
       </div>
     </div>

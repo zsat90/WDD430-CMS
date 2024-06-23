@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Contact } from './contact-model';
 import { MOCKCONTACTS } from './MOCKCONTACTS';
 
@@ -10,18 +11,29 @@ export class ContactService {
   private contacts: Contact[] = [];
   contactListChangedEvent = new Subject<Contact[]>();
   maxContactId: number;
+  private URL = 'https://wdd430-cms-f5f38-default-rtdb.firebaseio.com/contacts.json';
 
-  constructor() {
+  constructor(private http: HttpClient) {
     this.contacts = MOCKCONTACTS;
     this.maxContactId = this.getMaxId();
   }
 
-  getContacts(): Contact[] {
-    return this.contacts.slice();
+  getContacts(): Observable<Contact[]> {
+    return this.http.get<Contact[]>(this.URL);
   }
 
   getContact(id: string): Contact | null {
     return this.contacts.find(contact => contact.id === id) || null;
+  }
+
+  storeContacts(contacts: Contact[]): Observable<any> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+
+    const contactsString = JSON.stringify(contacts);
+
+    return this.http.put(this.URL, contactsString, { headers });
   }
 
   addContact(newContact: Contact): void {
@@ -33,8 +45,9 @@ export class ContactService {
     newContact.id = this.maxContactId.toString();
 
     this.contacts.push(newContact);
-    const contactsListClone = this.contacts.slice();
-    this.contactListChangedEvent.next(contactsListClone);
+    this.storeContacts(this.contacts).subscribe(() => {
+      this.contactListChangedEvent.next([...this.contacts]);
+    });
   }
 
   updateContact(originalContact: Contact, newContact: Contact): void {
@@ -42,28 +55,32 @@ export class ContactService {
       return;
     }
 
-    const pos = this.contacts.indexOf(originalContact);
-    if (pos < 0) {
+    const pos = this.contacts.findIndex(contact => contact.id === originalContact.id);
+    if (pos === -1) {
       return;
     }
 
     newContact.id = originalContact.id;
     this.contacts[pos] = newContact;
-    const contactsListClone = this.contacts.slice();
-    this.contactListChangedEvent.next(contactsListClone);
+    this.storeContacts(this.contacts).subscribe(() => {
+      this.contactListChangedEvent.next([...this.contacts]);
+    });
   }
 
   deleteContact(contact: Contact): void {
     if (!contact) {
       return;
     }
-    const pos = this.contacts.indexOf(contact);
-    if (pos < 0) {
+
+    const pos = this.contacts.findIndex(c => c.id === contact.id);
+    if (pos === -1) {
       return;
     }
+
     this.contacts.splice(pos, 1);
-    const contactsListClone = this.contacts.slice();
-    this.contactListChangedEvent.next(contactsListClone);
+    this.storeContacts(this.contacts).subscribe(() => {
+      this.contactListChangedEvent.next([...this.contacts]);
+    });
   }
 
   getMaxId(): number {

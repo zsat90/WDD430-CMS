@@ -11,11 +11,20 @@ import { Subscription } from 'rxjs';
 export class ContactListComponent implements OnInit {
   contacts: Contact[] = [];
   subscription!: Subscription
+  term: string = '';
 
   constructor(private contactService: ContactService) {}
 
   ngOnInit() {
-    this.contacts = this.contactService.getContacts();
+    this.contactService.getContacts().subscribe(
+      (contacts: Contact[]) => {
+        this.contacts = contacts;
+      },
+      (error: any) => {
+        console.error('Error fetching contacts:', error);
+      }
+    );
+
     this.subscription = this.contactService.contactListChangedEvent.subscribe(
       (contactsList: Contact[]) => {
         this.contacts = contactsList;
@@ -23,7 +32,11 @@ export class ContactListComponent implements OnInit {
     );
   }
 
+  search(value: string) {
+    this.term = value;
+  }
+
   ngOnDestroy() {
-    this.subscription.unsubscribe(); // Unsubscribe from the subscription
+    this.subscription.unsubscribe(); 
   }
 }
