@@ -1,6 +1,5 @@
 import { EventEmitter, Injectable } from '@angular/core';
 import { Message } from './message.model';
-import { MOCKMESSAGES } from './MOCKMESSAGES';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 
@@ -8,93 +7,111 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
   providedIn: 'root'
 })
 export class MessageService {
-  messages: Message[] = []
-  messageChangedEvent = new EventEmitter<Message[]>()
+  messages: Message[] = [];
+  messageChangedEvent = new EventEmitter<Message[]>();
   maxMessageId!: number;
-  private URL = 'https://wdd430-cms-f5f38-default-rtdb.firebaseio.com/messages.json';
+  private URL = 'http://localhost:3000/messages';  // Updated to point to the Node.js server
 
   constructor(private http: HttpClient) {
-    this.messages = MOCKMESSAGES
-    this.maxMessageId = this.getMaxId()
-   }
+    this.getMessages().subscribe((messages: Message[]) => {
+      this.messages = messages;
+      this.maxMessageId = this.getMaxId();
+    });
+  }
 
-   getMessages(): Observable<Message[]> {
+  getMessages(): Observable<Message[]> {
     return this.http.get<Message[]>(this.URL);
-    
-   }
+  }
 
-   getMessage(id: string): Message | null{
-    for(let message of this.messages){
-      if(message.id === id){
-        return message
-      }
-    }
-    return null
-   }
+  getMessage(id: string): Observable<Message> {
+    return this.http.get<Message>(`${this.URL}/${id}`);
+  }
 
-   storeMessages(messages: Message[]): Observable<any> {
+  storeMessages(messages: Message[]): Observable<any> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
 
-    const messagesString = JSON.stringify(messages);
+    return this.http.put(this.URL, messages, { headers });
+  }
 
-    return this.http.put(this.URL, messagesString, { headers });
-   }
-  
-
-   addMessage(message: Message){
-    if(!message){
-      return
+  addMessage(newMessage: Message): void {
+    if (!newMessage) {
+      return;
     }
 
-    this.messages.push(message)
-    this.storeMessages(this.messages).subscribe(() => {
-      this.messageChangedEvent.emit([...this.messages])
-    })
-   }
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
 
-   updateMessage(originalMessage: Message, newMessage: Message){
-    if(!originalMessage || !newMessage){
-      return
-    }
-
-    const pos = this.messages.indexOf(originalMessage)
-    if(pos < 0){
-      return
-    }
-
-    newMessage.id = originalMessage.id
-    this.messages[pos] = newMessage
-    this.storeMessages(this.messages).subscribe(() => {
-      this.messageChangedEvent.emit([...this.messages])
-    })
-   }
-
-    deleteMessage(message: Message){
-      if(!message){
-        return
-      }
-  
-      const pos = this.messages.indexOf(message)
-      if(pos < 0){
-        return
-      }
-  
-      this.messages.splice(pos, 1)
-      this.storeMessages(this.messages).subscribe(() => {
-        this.messageChangedEvent.emit([...this.messages])
-      })
-    }
-
-    getMaxId(): number{
-      let maxId = 0
-      for(let message of this.messages){
-        let currentId = parseInt(message.id)
-        if(currentId > maxId){
-          maxId = currentId
+    this.http.post<AddMessageResponse>(this.URL, newMessage, { headers })
+      .subscribe(
+        (responseData) => {
+          this.messages.push(responseData.addedMessage);
+          this.messageChangedEvent.emit([...this.messages]);
+        },
+        (error) => {
+          console.error('Error adding message:', error);
         }
-      }
-      return maxId
+      );
+  }
+
+  updateMessage(originalMessage: Message, newMessage: Message): void {
+    if (!originalMessage || !newMessage) {
+      return;
     }
+
+    newMessage.id = originalMessage.id;
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
+    this.http.put<{ message: string }>(`${this.URL}/${originalMessage.id}`, newMessage, { headers })
+      .subscribe(
+        () => {
+          const pos = this.messages.findIndex(message => message.id === originalMessage.id);
+          if (pos !== -1) {
+            this.messages[pos] = newMessage;
+            this.messageChangedEvent.emit([...this.messages]);
+          }
+        },
+        (error) => {
+          console.error('Error updating message:', error);
+        }
+      );
+  }
+
+  deleteMessage(message: Message): void {
+    if (!message) {
+      return;
+    }
+
+    const pos = this.messages.findIndex(m => m.id === message.id);
+    if (pos === -1) {
+      return;
+    }
+
+    this.http.delete<void>(`${this.URL}/${message.id}`)
+      .subscribe(
+        () => {
+          this.messages.splice(pos, 1);
+          this.messageChangedEvent.emit([...this.messages]);
+        },
+        (error) => {
+          console.error('Error deleting message:', error);
+        }
+      );
+  }
+
+  getMaxId(): number {
+    let maxId = 0;
+    for (let message of this.messages) {
+      let currentId = parseInt(message.id, 10);
+      if (currentId > maxId) {
+        maxId = currentId;
+      }
+    }
+    return maxId;
+  }
+}
+
+interface AddMessageResponse {
+  message: string;
+  addedMessage: Message;
 }

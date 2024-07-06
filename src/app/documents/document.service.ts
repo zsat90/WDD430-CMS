@@ -1,6 +1,6 @@
 import { EventEmitter, Injectable } from '@angular/core';
 import { Document } from './document.model';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, catchError } from 'rxjs';
 import { MOCKDOCUMENTS } from './MOCKDOCUMENTS';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 
@@ -13,7 +13,7 @@ export class DocumentService {
   documentChangedEvent = new EventEmitter<Document[]>()
   documentListChangedEvent = new Subject<Document[]>()
   maxDocumentId!: number
-  private URL = 'https://wdd430-cms-f5f38-default-rtdb.firebaseio.com/documents.json'
+  private URL = 'http://localhost:3000/documents'
 
   constructor(private http: HttpClient) { 
     this.documents = MOCKDOCUMENTS
@@ -46,64 +46,96 @@ export class DocumentService {
   }
 
 
-  // deleteDocument(document: Document) {
-  //   if (!document) {
-  //     return;
-  //   }
-  //   const pos = this.documents.indexOf(document);
-  //   if (pos < 0) {
-  //     return;
-  //   }
-  //   this.documents.splice(pos, 1);
-  //   this.documentChangedEvent.emit(this.documents.slice());
-  // }
-
   addDocument(newDocument: Document): void {
     if (!newDocument) {
       return;
     }
 
-    this.maxDocumentId++;
-    newDocument.id = this.maxDocumentId.toString();
+    
+    const headers = new HttpHeaders({'Content-Type': 'application/json'});
 
-    this.documents.push(newDocument);
-    this.storeDocuments(this.documents).subscribe(() => {
-      this.documentListChangedEvent.next([...this.documents]);
-    });
+   
+    this.http.post<{ message: string, document: Document }>('http://localhost:3000/documents',
+      newDocument,
+      { headers: headers })
+      .subscribe(
+        (responseData) => {
+         
+          this.documents.push(responseData.document);
+          
+          this.documentListChangedEvent.next([...this.documents]);
+        },
+        (error) => {
+          console.error('Error adding document:', error);
+        }
+      );
   }
 
-  updateDocument(originalDocument: Document, newDocument: Document): void {
+  updateDocument(originalDocument: Document, newDocument: Document) {
     if (!originalDocument || !newDocument) {
       return;
     }
 
-    const index = this.documents.findIndex(doc => doc.id === originalDocument.id);
-    if (index === -1) {
+    const pos = this.documents.findIndex(d => d.id === originalDocument.id);
+
+    if (pos < 0) {
       return;
     }
 
+  
     newDocument.id = originalDocument.id;
-    this.documents[index] = newDocument;
-    this.storeDocuments(this.documents).subscribe(() => {
-      this.documentListChangedEvent.next([...this.documents]);
-    });
+
+    const headers = new HttpHeaders({'Content-Type': 'application/json'});
+
+    // Update database
+    this.http.put<{ message: string }>('http://localhost:3000/documents/' + originalDocument.id,
+      newDocument,
+      { headers: headers })
+      .pipe(
+        catchError(error => {
+          console.error('Error updating document:', error);
+          throw error;
+        })
+      )
+      .subscribe(
+        () => {
+          this.documents[pos] = newDocument;
+          this.sortAndSend();
+        }
+      );
   }
 
-  deleteDocument(document: Document): void {
+  deleteDocument(document: Document) {
     if (!document) {
       return;
     }
 
-    const index = this.documents.findIndex(doc => doc.id === document.id);
-    if (index === -1) {
+    const pos = this.documents.findIndex(d => d.id === document.id);
+
+    if (pos < 0) {
       return;
     }
 
-    this.documents.splice(index, 1);
-    this.storeDocuments(this.documents).subscribe(() => {
-      this.documentListChangedEvent.next([...this.documents]);
-    });
+    // Delete from database
+    this.http.delete<void>('http://localhost:3000/documents/' + document.id)
+      .pipe(
+        catchError(error => {
+          console.error('Error deleting document:', error);
+          throw error;
+        })
+      )
+      .subscribe(
+        () => {
+          this.documents.splice(pos, 1);
+          this.sortAndSend();
+        }
+      );
   }
+
+  private sortAndSend() {
+    this.documentListChangedEvent.next([...this.documents]);
+  }
+
 
 
   getMaxId(): number {

@@ -5,12 +5,15 @@ var http = require("http");
 var bodyParser = require("body-parser");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
+var mongoose = require("mongoose");
+require("dotenv").config();
+const mongodbURI = process.env.MONGODB_URI;
 
 // import the routing file to handle the default (index) route
 var index = require("./server/routes/app");
-const messageRoutes = require("./server/routes/messages");
-const contactRoutes = require("./server/routes/contacts");
-const documentRoutes = require("./server/routes/documents");
+const messageRoutes = require("./server/routes/messagesRoutes");
+const contactRoutes = require("./server/routes/contactsRoutes");
+const documentRoutes = require("./server/routes/documentsRoutes");
 
 // ... ADD CODE TO IMPORT YOUR ROUTING FILES HERE ...
 
@@ -51,6 +54,21 @@ app.use("/", index);
 app.use("/messages", messageRoutes);
 app.use("/contacts", contactRoutes);
 app.use("/documents", documentRoutes);
+
+// establish a connection to the mongo database
+async function connectToDatabase() {
+  try {
+    await mongoose.connect(mongodbURI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log("Connected to database!");
+  } catch (err) {
+    console.log("Connection failed: " + err);
+  }
+}
+
+connectToDatabase();
 
 // ... ADD YOUR CODE TO MAP YOUR URL'S TO ROUTING FILES HERE ...
 app.use((req, res, next) => {

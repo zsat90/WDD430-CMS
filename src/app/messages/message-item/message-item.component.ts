@@ -6,20 +6,27 @@ import { Contact } from '../../contacts/contact-model';
 @Component({
   selector: 'cms-message-item',
   templateUrl: './message-item.component.html',
-  styleUrl: './message-item.component.css'
+  styleUrls: ['./message-item.component.css']
 })
 export class MessageItemComponent implements OnInit {
-  @Input() message!: Message
-  messageSender!: string
-  
+  @Input() message!: Message;
+  messageSender: string = 'Unknown Sender'; // Default value
 
-  constructor(private contactService:ContactService){}
+  constructor(private contactService: ContactService) {}
 
   ngOnInit() {
-    const contact: Contact | null = this.contactService.getContact(this.message.sender);
-    this.messageSender = contact ? contact.name: 'Unknown Sender'
-    
-  
-    
+    if (this.message && this.message.sender) {
+      this.contactService.getContact(this.message.sender).subscribe(
+        (contact: Contact | null) => {
+          this.messageSender = contact ? contact.name : 'Unknown Sender';
+        },
+        (error) => {
+          console.error('Error fetching contact:', error);
+          this.messageSender = 'Unknown Sender';
+        }
+      );
+    } else {
+      this.messageSender = 'Unknown Sender';
+    }
   }
 }
